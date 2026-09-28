@@ -12,6 +12,7 @@ Kotlin + Spring Boot. 기획 문서는 앱 저장소의 `docs/`에 있다.
 - [.ai/rules/architecture.md](.ai/rules/architecture.md) — 레이어 구조, LLM 경계
 - [.ai/rules/coding.md](.ai/rules/coding.md) — 코드 스타일, Spring 사용 규칙
 - [.ai/rules/git.md](.ai/rules/git.md) — 브랜치, 커밋 메시지
+- [.ai/rules/pr.md](.ai/rules/pr.md) — PR 작성과 병합
 - [.ai/rules/testing.md](.ai/rules/testing.md) — 테스트 대상과 작성 기준
 
 ## 맥락
