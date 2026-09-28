@@ -147,8 +147,11 @@ AI가 커밋을 만들 때 따르는 순서다.
 
 | 저장소 | 명령 |
 |---|---|
-| 앱 | `dart format --set-exit-if-changed .` · `flutter analyze` |
+| 앱 | `dart format --set-exit-if-changed lib test` · `flutter analyze` |
 | 서버 | `./gradlew ktlintCheck build` |
+
+앱 포맷 대상은 `lib`·`test`로 한정한다. `.`을 쓰면 iOS 빌드 후 `build/`에
+받아 둔 패키지 소스까지 검사해 실패한다.
 
 검사에 실패하면 커밋하지 않고 사용자에게 실패 내용을 보고한다. 건너뛰어야
 할 사정이 있으면 사용자가 판단한다. AI가 임의로 생략하지 않는다.
