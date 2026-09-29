@@ -104,6 +104,21 @@ API 스펙 변경은 앱과 서버 두 저장소에 걸친다. 양쪽 커밋 메
 - 커밋 메시지와 PR 본문에 `Co-Authored-By` 등 AI 작업 표기를 넣지 않는다.
   AI 활용 사실은 README의 개발 방식 항목에 적는다
 
+## git 훅
+
+`.githooks/`의 훅이 커밋 시점에 규칙을 강제한다. clone 후 한 번 설정한다.
+
+```
+git config core.hooksPath .githooks
+```
+
+| 훅 | 검사 |
+|---|---|
+| `pre-commit` | 작성자 이메일, 비밀 파일 스테이징, 코드 변경 시 사전 검사 |
+| `commit-msg` | AI 작업 표기 |
+
+훅이 커밋을 막으면 `--no-verify`로 우회하지 않고 원인을 해결한다.
+
 ## 사전 검사
 
 | 저장소 | 명령 |

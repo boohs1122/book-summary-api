@@ -1,0 +1,28 @@
+#!/bin/sh
+# 저장소 규칙 강제 (.ai/rules/git.md). Claude Code·Codex·사람 모두에게 적용된다
+
+EXPECTED_EMAIL="78332477+boohs1122@users.noreply.github.com"
+
+author_email=$(git var GIT_AUTHOR_IDENT | sed -E 's/.*<(.*)>.*/\1/')
+if [ "$author_email" != "$EXPECTED_EMAIL" ]; then
+    echo "[pre-commit] 작성자 이메일이 $author_email 입니다. $EXPECTED_EMAIL 로 설정하세요" >&2
+    exit 1
+fi
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+secrets=$(printf '%s\n' "$staged" | grep -E '(^|/)\.env($|\.)|google-services\.json$|GoogleService-Info\.plist$|firebase_options\.dart$|firebase-adminsdk.*\.json$|-service-account.*\.json$' | grep -v '\.env\.example$')
+if [ -n "$secrets" ]; then
+    echo "[pre-commit] 커밋하면 안 되는 파일이 스테이징되었습니다:" >&2
+    printf '  %s\n' $secrets >&2
+    exit 1
+fi
+
+# 코드·빌드 설정이 바뀐 경우에만 사전 검사를 돌린다
+if printf '%s\n' "$staged" | grep -qE '\.(kt|kts)$|^src/main/resources/|^gradle/'; then
+    echo "[pre-commit] ./gradlew ktlintCheck build 실행"
+    if ! ./gradlew -q ktlintCheck build; then
+        echo "[pre-commit] 사전 검사 실패. 커밋하지 않습니다" >&2
+        exit 1
+    fi
+fi

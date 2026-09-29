@@ -1,0 +1,7 @@
+#!/bin/sh
+# 커밋 메시지에 AI 작업 표기를 넣지 않는다 (.ai/rules/git.md)
+
+if grep -qiE '^Co-Authored-By:|Generated with' "$1"; then
+    echo "[commit-msg] 커밋 메시지에 AI 작업 표기가 있습니다. 제거하세요" >&2
+    exit 1
+fi
