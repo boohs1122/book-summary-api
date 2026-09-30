@@ -1,5 +1,6 @@
 package com.boohs.booksummary.common
 
+import com.boohs.booksummary.config.FirebaseTokenVerifier
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.junit.jupiter.api.Test
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActionsDsl
 import org.springframework.test.web.servlet.get
@@ -21,6 +23,9 @@ import org.springframework.web.bind.annotation.RestController
 class GlobalExceptionHandlerTest(
     @Autowired private val mockMvc: MockMvc,
 ) {
+    @MockitoBean
+    private lateinit var tokenVerifier: FirebaseTokenVerifier
+
     @Test
     fun `비즈니스 예외는 지정한 코드와 상태로 변환한다`() {
         mockMvc.get("/probe/business").andExpectError(409, ErrorCode.JOB_IN_PROGRESS)

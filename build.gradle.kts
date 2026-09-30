@@ -22,6 +22,7 @@ repositories {
 }
 
 dependencies {
+    implementation("com.google.firebase:firebase-admin:9.11.0")
     implementation("org.springframework.boot:spring-boot-h2console")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
