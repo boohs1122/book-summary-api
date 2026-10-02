@@ -3,7 +3,13 @@ package com.boohs.booksummary.service
 import com.boohs.booksummary.common.BusinessException
 import com.boohs.booksummary.common.ErrorCode
 import com.boohs.booksummary.domain.Book
+import com.boohs.booksummary.domain.BookDetails
+import com.boohs.booksummary.domain.BookOverview
+import com.boohs.booksummary.domain.DocumentOverview
+import com.boohs.booksummary.llm.validator.SummaryValidator
 import com.boohs.booksummary.repository.BookRepository
+import com.boohs.booksummary.repository.DocumentRepository
+import com.boohs.booksummary.repository.SummaryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -12,8 +18,41 @@ import java.time.Instant
 @Transactional(readOnly = true)
 class BookService(
     private val bookRepository: BookRepository,
+    private val documentRepository: DocumentRepository,
+    private val summaryRepository: SummaryRepository,
+    private val summaryValidator: SummaryValidator,
 ) {
-    fun list(uid: String): List<Book> = bookRepository.findAllByOwnerUidOrderByCreatedAtDescIdDesc(uid)
+    fun list(uid: String): List<BookOverview> {
+        val books = bookRepository.findAllByOwnerUidOrderByCreatedAtDescIdDesc(uid)
+        if (books.isEmpty()) return emptyList()
+        val documentsByBook = documentRepository.findAllByBookIdIn(books.map { it.id }).groupBy { it.book.id }
+        return books
+            .map { book ->
+                val documents = documentsByBook[book.id].orEmpty()
+                BookOverview(book, documents.size, documents.sumOf { it.charCount }, documents.maxOfOrNull { it.lastActivityAt })
+            }.sortedWith(
+                compareByDescending<BookOverview> { it.lastStudiedAt }
+                    .thenByDescending { it.book.createdAt }
+                    .thenByDescending { it.book.id },
+            )
+    }
+
+    fun detail(
+        uid: String,
+        bookId: String,
+    ): BookDetails {
+        val book = get(uid, bookId)
+        val documents = documentRepository.findAllByBookIdOrderBySequenceAsc(bookId)
+        val titles =
+            if (documents.isEmpty()) {
+                emptyMap()
+            } else {
+                summaryRepository
+                    .findAllByDocumentIdIn(documents.map { it.id })
+                    .associate { it.document.id to summaryValidator.parse(it.contentJson).title }
+            }
+        return BookDetails(book, documents.map { DocumentOverview(it, titles[it.id]) })
+    }
 
     @Transactional
     fun create(
@@ -43,6 +82,16 @@ class BookService(
         uid: String,
         bookId: String,
     ) {
-        bookRepository.delete(get(uid, bookId))
+        bookRepository.delete(getForUpdate(uid, bookId))
+    }
+
+    @Transactional
+    fun getForUpdate(
+        uid: String,
+        bookId: String,
+    ): Book {
+        val book = bookRepository.findLockedById(bookId) ?: throw BusinessException(ErrorCode.NOT_FOUND)
+        if (book.ownerUid != uid) throw BusinessException(ErrorCode.FORBIDDEN)
+        return book
     }
 }
