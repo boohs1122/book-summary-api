@@ -17,3 +17,7 @@ spring:
 
 firebase:
   project-id: ${FIREBASE_PROJECT_ID:}
+
+llm:
+  api-key: ${LLM_API_KEY:}
+  model: ${LLM_MODEL:}

@@ -4,6 +4,7 @@ import com.boohs.booksummary.config.FirebaseAuthInterceptor
 import com.boohs.booksummary.dto.BookCreateRequest
 import com.boohs.booksummary.dto.BookCreateResponse
 import com.boohs.booksummary.dto.BookDetailResponse
+import com.boohs.booksummary.dto.BookDocumentResponse
 import com.boohs.booksummary.dto.BookItemResponse
 import com.boohs.booksummary.dto.BookListResponse
 import com.boohs.booksummary.service.BookService
@@ -30,15 +31,15 @@ class BookController(
     ): BookListResponse =
         BookListResponse(
             items =
-                bookService.list(uid).map { book ->
+                bookService.list(uid).map { overview ->
                     BookItemResponse(
-                        bookId = book.id,
-                        title = book.title,
-                        documentCount = 0,
-                        totalCharCount = 0,
-                        lastStudiedAt = null,
+                        bookId = overview.book.id,
+                        title = overview.book.title,
+                        documentCount = overview.documentCount,
+                        totalCharCount = overview.totalCharCount,
+                        lastStudiedAt = overview.lastStudiedAt,
                         latestScore = null,
-                        createdAt = book.createdAt,
+                        createdAt = overview.book.createdAt,
                     )
                 },
             nextCursor = null,
@@ -59,8 +60,27 @@ class BookController(
         @RequestAttribute(FirebaseAuthInterceptor.AUTH_UID_ATTRIBUTE) uid: String,
         @PathVariable bookId: String,
     ): BookDetailResponse {
-        val book = bookService.get(uid, bookId)
-        return BookDetailResponse(book.id, book.title, 0, 0, emptyList())
+        val detail = bookService.detail(uid, bookId)
+        return BookDetailResponse(
+            bookId = detail.book.id,
+            title = detail.book.title,
+            documentCount = detail.documentCount,
+            totalCharCount = detail.totalCharCount,
+            documents =
+                detail.documents.map { overview ->
+                    BookDocumentResponse(
+                        documentId = overview.document.id,
+                        sequence = overview.document.sequence,
+                        status = overview.document.status.name,
+                        title = overview.summaryTitle,
+                        preview = overview.preview,
+                        charCount = overview.document.charCount,
+                        hasQuiz = false,
+                        latestScore = null,
+                        createdAt = overview.document.createdAt,
+                    )
+                },
+        )
     }
 
     @DeleteMapping("/{bookId}")
