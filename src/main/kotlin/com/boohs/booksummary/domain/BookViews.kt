@@ -7,6 +7,7 @@ data class BookOverview(
     val documentCount: Int,
     val totalCharCount: Int,
     val lastStudiedAt: Instant?,
+    val latestScore: Pair<Int, Int>?,
 )
 
 data class BookDetails(
@@ -23,6 +24,8 @@ data class BookDetails(
 data class DocumentOverview(
     val document: Document,
     val summaryTitle: String?,
+    val quizId: String?,
+    val latestScore: Pair<Int, Int>?,
 ) {
     val preview: String?
         get() = if (summaryTitle == null) document.extractedText.take(40) else null
@@ -32,4 +35,7 @@ data class DocumentDetails(
     val document: Document,
     val book: Book,
     val summary: SummaryContent?,
+    val quizId: String?,
+    val quizQuestionCount: Int?,
+    val latestScore: Pair<Int, Int>?,
 )

@@ -5,4 +5,10 @@ interface LlmClient {
         text: String,
         keyPointCount: Int,
     ): String
+
+    fun generateQuiz(
+        text: String,
+        summaryJson: String,
+        questionCount: Int,
+    ): String
 }

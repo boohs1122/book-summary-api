@@ -5,6 +5,7 @@ import com.boohs.booksummary.common.ErrorCode
 import com.boohs.booksummary.config.LlmProperties
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -16,6 +17,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpTimeoutException
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+import java.util.concurrent.Flow
 
 class GeminiClientTest {
     private val mapper = JsonMapper.builder().build()
@@ -92,6 +96,73 @@ class GeminiClientTest {
             val exception = assertThrows(BusinessException::class.java) { client.generateSummary("원문", 3) }
             assertEquals(ErrorCode.LLM_INVALID_RESPONSE, exception.errorCode)
         }
+    }
+
+    @Test
+    fun `퀴즈는 원문과 요약을 보내고 세 문항 네 선택지 정답 범위 스키마를 사용한다`() {
+        val quizJson = """{"questions":[]}"""
+        stubResponse(
+            200,
+            mapper.writeValueAsString(
+                mapOf(
+                    "candidates" to
+                        listOf(
+                            mapOf(
+                                "finishReason" to "STOP",
+                                "content" to mapOf("parts" to listOf(mapOf("text" to quizJson))),
+                            ),
+                        ),
+                ),
+            ),
+        )
+
+        assertEquals(quizJson, client.generateQuiz("광합성 원문", "검증된 요약", 3))
+        val captor = ArgumentCaptor.forClass(HttpRequest::class.java)
+        verify(httpClient).send(captor.capture(), any<HttpResponse.BodyHandler<String>>())
+        val body = StringBuilder()
+        captor.value
+            .bodyPublisher()
+            .orElseThrow()
+            .subscribe(
+                object : Flow.Subscriber<ByteBuffer> {
+                    override fun onSubscribe(subscription: Flow.Subscription) = subscription.request(Long.MAX_VALUE)
+
+                    override fun onNext(item: ByteBuffer) {
+                        val bytes = ByteArray(item.remaining())
+                        item.get(bytes)
+                        body.append(String(bytes, StandardCharsets.UTF_8))
+                    }
+
+                    override fun onError(throwable: Throwable) = throw AssertionError(throwable)
+
+                    override fun onComplete() = Unit
+                },
+            )
+        val request = mapper.readTree(body.toString())
+        val questions =
+            request
+                .path("generationConfig")
+                .path("responseJsonSchema")
+                .path("properties")
+                .path("questions")
+        assertEquals(3, questions.path("minItems").intValue())
+        assertEquals(3, questions.path("maxItems").intValue())
+        val fields = questions.path("items").path("properties")
+        assertEquals(4, fields.path("options").path("minItems").intValue())
+        assertEquals(4, fields.path("options").path("maxItems").intValue())
+        assertEquals(0, fields.path("answerIndex").path("minimum").intValue())
+        assertEquals(3, fields.path("answerIndex").path("maximum").intValue())
+        assertEquals("application/json", request.path("generationConfig").path("responseMimeType").stringValue())
+        val text =
+            request
+                .path("contents")
+                .path(0)
+                .path("parts")
+                .path(0)
+                .path("text")
+                .stringValue()
+        assertTrue(text.contains("광합성 원문"))
+        assertTrue(text.contains("검증된 요약"))
     }
 
     private fun stubResponse(

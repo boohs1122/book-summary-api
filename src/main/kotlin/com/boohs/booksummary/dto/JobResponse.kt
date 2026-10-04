@@ -18,4 +18,5 @@ data class JobResponse(
     val documentId: String?,
     val completedAt: Instant?,
     val error: ErrorResponse.ErrorBody?,
+    val quizId: String? = null,
 )

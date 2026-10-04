@@ -7,6 +7,7 @@ import com.boohs.booksummary.dto.BookDetailResponse
 import com.boohs.booksummary.dto.BookDocumentResponse
 import com.boohs.booksummary.dto.BookItemResponse
 import com.boohs.booksummary.dto.BookListResponse
+import com.boohs.booksummary.dto.BookScoreResponse
 import com.boohs.booksummary.service.BookService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -38,7 +39,10 @@ class BookController(
                         documentCount = overview.documentCount,
                         totalCharCount = overview.totalCharCount,
                         lastStudiedAt = overview.lastStudiedAt,
-                        latestScore = null,
+                        latestScore =
+                            overview.latestScore?.let { (correct, total) ->
+                                BookScoreResponse(correct, total)
+                            },
                         createdAt = overview.book.createdAt,
                     )
                 },
@@ -75,8 +79,11 @@ class BookController(
                         title = overview.summaryTitle,
                         preview = overview.preview,
                         charCount = overview.document.charCount,
-                        hasQuiz = false,
-                        latestScore = null,
+                        hasQuiz = overview.quizId != null,
+                        latestScore =
+                            overview.latestScore?.let { (correct, total) ->
+                                BookScoreResponse(correct, total)
+                            },
                         createdAt = overview.document.createdAt,
                     )
                 },
