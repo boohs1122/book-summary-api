@@ -8,6 +8,8 @@ description: feature 브랜치를 PR로 올리거나 병합할 때 사용한다.
 제목·본문·병합 방식은 [.ai/rules/pr.md](../../../.ai/rules/pr.md)를 따른다.
 이 문서는 순서만 다룬다.
 
+작업 시작과 새 브랜치 생성 전에는 [Git 규칙의 작업 시작과 브랜치 생성](../../../.ai/rules/git.md#작업-시작과-브랜치-생성)을 따른다. 기존 변경이 있으면 보존하고 동기화 상태를 확인한다.
+
 ## gh 사용
 
 - 원격 주소가 SSH 별칭이라 `gh`가 저장소를 추론하지 못한다. 모든 명령에 `--repo boohs1122/book-summary-api`를 붙인다
@@ -33,4 +35,4 @@ description: feature 브랜치를 PR로 올리거나 병합할 때 사용한다.
 
 1. 사용자가 병합을 요청했을 때만 진행한다
 2. `gh pr merge {번호} --merge --delete-branch`로 병합한다 (계정 지정은 위와 같다)
-3. 로컬에서 `git switch main && git pull`로 동기화하고, 병합된 로컬 브랜치를 `git branch -d`로 지운다
+3. 로컬에서 `git switch main && git pull --ff-only origin main`로 동기화하고, 병합된 로컬 브랜치를 `git branch -d`로 지운다
