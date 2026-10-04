@@ -115,6 +115,19 @@ class BookService(
     }
 
     @Transactional
+    fun updateTitle(
+        uid: String,
+        bookId: String,
+        title: String,
+    ): Book {
+        val normalizedTitle = title.trim()
+        if (normalizedTitle.length !in 1..100) throw BusinessException(ErrorCode.INVALID_REQUEST)
+        val book = getForUpdate(uid, bookId)
+        book.rename(normalizedTitle)
+        return book
+    }
+
+    @Transactional
     fun delete(
         uid: String,
         bookId: String,

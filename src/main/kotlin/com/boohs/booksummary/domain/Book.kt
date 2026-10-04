@@ -14,8 +14,16 @@ class Book(
     val id: String,
     @Column(nullable = false, length = 128)
     val ownerUid: String,
-    @Column(nullable = false, length = 100)
-    val title: String,
+    title: String,
     @Column(nullable = false)
     val createdAt: Instant,
-)
+) {
+    @Column(nullable = false, length = 100)
+    var title: String = title
+        protected set
+
+    fun rename(title: String) {
+        require(title.length in 1..100 && title == title.trim())
+        this.title = title
+    }
+}

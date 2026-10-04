@@ -17,6 +17,7 @@
 | B2 | POST | `/books` | 책 생성 |
 | B3 | GET | `/books/{bookId}` | 책 상세 + 회차 목록 |
 | B4 | DELETE | `/books/{bookId}` | 책 삭제 |
+| B5 | PATCH | `/books/{bookId}` | 책 제목 수정 |
 | E2 | POST | `/documents` | 텍스트 등록 + 요약 요청 |
 | E3 | GET | `/jobs/{jobId}` | 작업 상태 |
 | E4 | GET | `/documents/{documentId}` | 회차 상세 + 요약 |

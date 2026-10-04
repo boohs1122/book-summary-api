@@ -11,6 +11,7 @@
 |---|---|---|
 | GET / POST | `/books` | 책 목록 / 생성 |
 | GET / DELETE | `/books/{bookId}` | 책 상세와 회차 목록 / 연관 데이터 삭제 |
+| PATCH | `/books/{bookId}` | 소유한 책의 제목 수정 |
 | POST | `/documents` | 텍스트 등록과 요약 생성 작업 시작 |
 | GET / DELETE | `/documents/{documentId}` | 원문·요약 조회 / 회차 삭제 |
 | POST | `/documents/{documentId}/retry` | 실패한 회차의 요약 재시도 |
