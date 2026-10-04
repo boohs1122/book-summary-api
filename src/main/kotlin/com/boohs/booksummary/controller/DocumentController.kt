@@ -2,6 +2,7 @@ package com.boohs.booksummary.controller
 
 import com.boohs.booksummary.config.FirebaseAuthInterceptor
 import com.boohs.booksummary.domain.ProcessingStatus
+import com.boohs.booksummary.dto.BookScoreResponse
 import com.boohs.booksummary.dto.DocumentCreateRequest
 import com.boohs.booksummary.dto.DocumentDetailResponse
 import com.boohs.booksummary.dto.DocumentQuizResponse
@@ -56,7 +57,20 @@ class DocumentController(
                         terms = summary.terms.map { SummaryTermResponse(it.term, it.meaning) },
                     )
                 },
-            quiz = if (detail.document.status == ProcessingStatus.DONE) DocumentQuizResponse(exists = false) else null,
+            quiz =
+                if (detail.document.status == ProcessingStatus.DONE) {
+                    DocumentQuizResponse(
+                        exists = detail.quizId != null,
+                        quizId = detail.quizId,
+                        questionCount = detail.quizQuestionCount,
+                        latestScore =
+                            detail.latestScore?.let { (correct, total) ->
+                                BookScoreResponse(correct, total)
+                            },
+                    )
+                } else {
+                    null
+                },
             createdAt = detail.document.createdAt,
         )
     }

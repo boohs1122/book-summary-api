@@ -28,10 +28,15 @@ class Job(
     val ownerUid: String,
     @Column(nullable = false)
     val createdAt: Instant,
+    type: JobType = JobType.SUMMARY,
 ) {
+    @Column(length = 30)
+    var quizId: String? = null
+        protected set
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    val type: JobType = JobType.SUMMARY
+    val type: JobType = type
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
@@ -54,10 +59,14 @@ class Job(
         startedAt = now
     }
 
-    fun complete(now: Instant) {
+    fun complete(
+        now: Instant,
+        quizId: String? = null,
+    ) {
         check(status == ProcessingStatus.PROCESSING)
         status = ProcessingStatus.DONE
         completedAt = now
+        this.quizId = quizId
     }
 
     fun fail(

@@ -9,6 +9,8 @@ import com.boohs.booksummary.domain.ProcessingStatus
 import com.boohs.booksummary.llm.validator.SummaryValidator
 import com.boohs.booksummary.repository.DocumentRepository
 import com.boohs.booksummary.repository.JobRepository
+import com.boohs.booksummary.repository.QuizRepository
+import com.boohs.booksummary.repository.QuizResultRepository
 import com.boohs.booksummary.repository.SummaryRepository
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -24,6 +26,8 @@ class DocumentService(
     private val summaryRepository: SummaryRepository,
     private val summaryValidator: SummaryValidator,
     private val events: ApplicationEventPublisher,
+    private val quizRepository: QuizRepository,
+    private val quizResultRepository: QuizResultRepository,
 ) {
     @Transactional
     fun register(
@@ -60,7 +64,15 @@ class DocumentService(
             } else {
                 null
             }
-        return DocumentDetails(document, book, summary)
+        val quiz = quizRepository.findByDocumentId(documentId)
+        val score =
+            quiz?.let {
+                quizResultRepository.findFirstByQuizIdOrderBySolvedAtDescIdDesc(it.id)?.let { result ->
+                    result.correct to
+                        result.total
+                }
+            }
+        return DocumentDetails(document, book, summary, quiz?.id, quiz?.let { 3 }, score)
     }
 
     @Transactional

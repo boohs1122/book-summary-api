@@ -60,4 +60,8 @@ class Document(
         status = ProcessingStatus.FAILED
         lastActivityAt = now
     }
+
+    fun touch(now: Instant) {
+        lastActivityAt = now
+    }
 }

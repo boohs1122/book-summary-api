@@ -9,6 +9,8 @@ import com.boohs.booksummary.domain.DocumentOverview
 import com.boohs.booksummary.llm.validator.SummaryValidator
 import com.boohs.booksummary.repository.BookRepository
 import com.boohs.booksummary.repository.DocumentRepository
+import com.boohs.booksummary.repository.QuizRepository
+import com.boohs.booksummary.repository.QuizResultRepository
 import com.boohs.booksummary.repository.SummaryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,6 +23,8 @@ class BookService(
     private val documentRepository: DocumentRepository,
     private val summaryRepository: SummaryRepository,
     private val summaryValidator: SummaryValidator,
+    private val quizRepository: QuizRepository,
+    private val quizResultRepository: QuizResultRepository,
 ) {
     fun list(uid: String): List<BookOverview> {
         val books = bookRepository.findAllByOwnerUidOrderByCreatedAtDescIdDesc(uid)
@@ -29,7 +33,16 @@ class BookService(
         return books
             .map { book ->
                 val documents = documentsByBook[book.id].orEmpty()
-                BookOverview(book, documents.size, documents.sumOf { it.charCount }, documents.maxOfOrNull { it.lastActivityAt })
+                BookOverview(
+                    book,
+                    documents.size,
+                    documents.sumOf { it.charCount },
+                    documents.maxOfOrNull { it.lastActivityAt },
+                    quizResultRepository.findFirstByQuizDocumentBookIdOrderBySolvedAtDescIdDesc(book.id)?.let {
+                        it.correct to
+                            it.total
+                    },
+                )
             }.sortedWith(
                 compareByDescending<BookOverview> { it.lastStudiedAt }
                     .thenByDescending { it.book.createdAt }
@@ -51,7 +64,31 @@ class BookService(
                     .findAllByDocumentIdIn(documents.map { it.id })
                     .associate { it.document.id to summaryValidator.parse(it.contentJson).title }
             }
-        return BookDetails(book, documents.map { DocumentOverview(it, titles[it.id]) })
+        val quizByDocument =
+            if (documents.isEmpty()) {
+                emptyMap()
+            } else {
+                quizRepository
+                    .findAllByDocumentIdIn(
+                        documents.map {
+                            it.id
+                        },
+                    ).associateBy { it.document.id }
+            }
+        return BookDetails(
+            book,
+            documents.map { document ->
+                val quiz = quizByDocument[document.id]
+                val score =
+                    quiz?.let {
+                        quizResultRepository.findFirstByQuizIdOrderBySolvedAtDescIdDesc(it.id)?.let { result ->
+                            result.correct to
+                                result.total
+                        }
+                    }
+                DocumentOverview(document, titles[document.id], quiz?.id, score)
+            },
+        )
     }
 
     @Transactional

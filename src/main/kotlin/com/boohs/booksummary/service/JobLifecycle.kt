@@ -17,7 +17,7 @@ class JobLifecycle(
     @EventListener(ApplicationReadyEvent::class)
     fun recover() {
         val count = jobs.recoverInterruptedJobs(processStartedAt)
-        if (count > 0) log.info("중단된 요약 작업 {}개를 실패 상태로 복구", count)
+        if (count > 0) log.info("중단된 생성 작업 {}개를 실패 상태로 복구", count)
     }
 
     @Scheduled(fixedDelay = 3600000, initialDelay = 3600000)

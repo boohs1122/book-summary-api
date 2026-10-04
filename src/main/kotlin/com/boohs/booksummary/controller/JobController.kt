@@ -1,7 +1,9 @@
 package com.boohs.booksummary.controller
 
+import com.boohs.booksummary.common.ErrorCode
 import com.boohs.booksummary.common.ErrorResponse
 import com.boohs.booksummary.config.FirebaseAuthInterceptor
+import com.boohs.booksummary.domain.JobType
 import com.boohs.booksummary.domain.ProcessingStatus
 import com.boohs.booksummary.dto.JobResponse
 import com.boohs.booksummary.service.SummaryJobService
@@ -29,7 +31,25 @@ class JobController(
             createdAt = job.createdAt,
             documentId = if (job.status == ProcessingStatus.PROCESSING) null else job.document.id,
             completedAt = job.completedAt,
-            error = job.errorCode?.let { ErrorResponse.ErrorBody(it.name, it.defaultMessage) },
+            error =
+                job.errorCode?.let { code ->
+                    val message =
+                        when {
+                            job.type == JobType.QUIZ && code == ErrorCode.LLM_FAILED -> {
+                                "퀴즈 생성에 실패했습니다. 잠시 후 다시 시도해 주세요."
+                            }
+
+                            job.type == JobType.QUIZ && code == ErrorCode.LLM_INVALID_RESPONSE -> {
+                                "퀴즈 결과가 올바르지 않습니다. 다시 시도해 주세요."
+                            }
+
+                            else -> {
+                                code.defaultMessage
+                            }
+                        }
+                    ErrorResponse.ErrorBody(code.name, message)
+                },
+            quizId = job.quizId,
         )
     }
 }
