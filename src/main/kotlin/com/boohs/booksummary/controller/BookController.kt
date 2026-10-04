@@ -8,11 +8,14 @@ import com.boohs.booksummary.dto.BookDocumentResponse
 import com.boohs.booksummary.dto.BookItemResponse
 import com.boohs.booksummary.dto.BookListResponse
 import com.boohs.booksummary.dto.BookScoreResponse
+import com.boohs.booksummary.dto.BookUpdateRequest
+import com.boohs.booksummary.dto.BookUpdateResponse
 import com.boohs.booksummary.service.BookService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestAttribute
@@ -88,6 +91,16 @@ class BookController(
                     )
                 },
         )
+    }
+
+    @PatchMapping("/{bookId}")
+    fun updateBookTitle(
+        @RequestAttribute(FirebaseAuthInterceptor.AUTH_UID_ATTRIBUTE) uid: String,
+        @PathVariable bookId: String,
+        @Valid @RequestBody request: BookUpdateRequest,
+    ): BookUpdateResponse {
+        val book = bookService.updateTitle(uid, bookId, request.normalizedTitle)
+        return BookUpdateResponse(book.id, book.title)
     }
 
     @DeleteMapping("/{bookId}")
